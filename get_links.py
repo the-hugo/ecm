@@ -7,7 +7,7 @@ import requests
 import time
 import csv
 
-BASE_URL = 'https://www.tripadvisor.com/Hotels-g187785-Naples_Province_of_Naples_Campania-Hotels.html'
+BASE_URL = 'https://www.tripadvisor.de/Hotels-g187791-Rome_Lazio-Hotels.html'
 PER_PAGE = 30
 
 def get_id_from_url(URL):
@@ -82,7 +82,7 @@ if __name__ == "__main__":
         link = get_link(url)
         links.extend(link)
 
-with open("links_naples.csv", mode='a+', newline='') as file:
+with open("links_rome.csv", mode='a+', newline='') as file:
     writer = csv.writer(file)  # Pass the 'file' object here
     for item in links:
         writer.writerow([item])
