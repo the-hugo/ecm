@@ -5,7 +5,7 @@ import requests
 import math
 
 
-def request_api(url, lang, page=0):
+def request_api(url, lang, page):
     geo, loc = get_ids_from_hotel_url(url)
     request = [
       {
@@ -67,7 +67,7 @@ def request_api(url, lang, page=0):
       {
         "variables": {
           "locationId": loc,
-          "offset": page * 5,
+          "offset": page * 20,
           "filters": [
             {
               "axis": "LANGUAGE",
@@ -78,7 +78,7 @@ def request_api(url, lang, page=0):
           ],
           "prefs": None,
           "initialPrefs": {},
-          "limit": 10,
+          "limit": 20,
           "filterCacheKey": None,
           "prefsCacheKey": "locationReviewPrefs_241729",
           "needKeywords": False,
@@ -124,40 +124,52 @@ def read_csv(file):
 
 def save_record(data):
     data_list = data[2]["data"]["locations"][0]["reviewListPage"]["reviews"]
-    with open("reviews_naples.csv", "a+", encoding="UTF-8", newline="") as file:
+    with open("reviews_naples.csv", "a+", encoding="UTF-8", newline="") as file: #  output file name
         fieldnames = ["Link", "Name", "Stadt", "Datum Kommentar", "User ID", "Besuchsdatum", "Sprache", "Bewertung Note", "Bewertung Text", "Über Mobile vs Website"]
         writer = csv.DictWriter(file, fieldnames=fieldnames)
         for data in data_list:
-            print(data["text"])
-            row = {
-                "Link": data["absoluteUrl"],
-                "Name": data["location"]["name"],
-                "Stadt": "Test",
-                "Datum Kommentar": data["publishedDate"],
-                "User ID": data["username"],
-                "Besuchsdatum": data["tripInfo"]["stayDate"],
-                "Sprache": data["originalLanguage"],
-                "Bewertung Note": data["rating"],
-                "Bewertung Text": data["text"],
-                "Über Mobile vs Website": data["publishPlatform"]
-                }
-            writer.writerow(row)
+            try:
+                row = {
+                    "Link": data["absoluteUrl"] if data["absoluteUrl"] else None,
+                    "Name": data["location"]["name"] if data["location"]["name"] else None,
+                    "Stadt": "Neapel", #  name of city to be added manually
+                    "Datum Kommentar": data["publishedDate"] if data["publishedDate"] else None,
+                    "User ID": data["username"] if data["username"] else None,
+                    "Besuchsdatum": data["tripInfo"]["stayDate"] if data["tripInfo"]["stayDate"] else None,
+                    "Sprache": data["originalLanguage"] if data["originalLanguage"] else None,
+                    "Bewertung Note": data["rating"] if data["rating"] else None,
+                    "Bewertung Text": data["text"] if data["text"] else None,
+                    "Über Mobile vs Website": data["publishPlatform"] if data["publishPlatform"] else None
+                    }
+                writer.writerow(row)
+            except Exception as e:
+                print("!!!", data, e)
 
 GRAPHQL_URL = "https://www.tripadvisor.com/data/graphql/ids"
 
 if __name__ == "__main__":
+    thing = []
+    soll = 0
     data_list = []
-    read_csv("links_naples.csv")
+    read_csv("links_naples.csv") #  input file name
+    counter = 0
     for hotel in data_list:
-        languages = []
+        languages = {}
         if len(languages) == 0:
-            response = request_api("Hotel_Review-g187785-d630200-Reviews-Bed_and_Breakfast_Chiaia_Bridge-Naples_Province_of_Naples_Campania.html","en")
+            response = request_api(hotel,"en", 0)
             languages = response[2]["data"]["locations"][0]["reviewAggregations"]["languageCounts"]
+            soll += response[2]["data"]["locations"][0]["reviewSummary"]["count"]
+            print(languages)
             for key in languages:
-                languages[key] = math.ceil(languages[key] / 5)
+                languages[key] = math.ceil(languages[key] / 20)
             sleep(1)
         for lang in languages:
             for i in range(languages[lang]):
-                sleep(3)
-                response = request_api(hotel, lang, page=i)
+                sleep(1)
+                response = request_api(hotel, lang, i)
                 save_record(response)
+                counter += 1
+                thing.extend(response[2]["data"]["locations"][0]["reviewListPage"]["reviews"])
+                print("Soll",soll, "Ist", len(thing))
+        if soll != len(thing):
+            print("!")
