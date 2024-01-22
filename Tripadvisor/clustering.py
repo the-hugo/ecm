@@ -3,7 +3,7 @@ from selenium import webdriver
 from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 import time
-
+import urllib.parse
 # def read_csv(file):
 #     with open(file, mode='r', newline='') as f:
 #         reader = csv.reader(f)
@@ -18,10 +18,14 @@ def get_data():
     elements = driver.find_elements(By.XPATH, "//div[@data-test-target='amenity_text']")
     html = driver.page_source
     soup = BeautifulSoup(html, 'html.parser')
+
     elements = soup.find_all(attrs={'data-test-target': 'amenity_text'})
     elements_with_aria_label = soup.find_all(attrs={'aria-label': True})
     div_element = soup.find('div', class_='CMiVw _R MC S4 _a H')
-    # Filter elements where aria-label ends with "Sterne"
+
+# find price tag price_tag = soup.find('div', class_='aLfMd')
+
+
     for i in div_element:
         all_text = i.get_text(strip=True)
         print(all_text)
